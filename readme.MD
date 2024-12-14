@@ -8,15 +8,18 @@ This project collects and processes bridging events from the SocketGate contract
 
 ## Installation Steps
 
-## Using Docker
+### Using Docker
 
-## Prerequisites
+#### Prerequisites
 
-Before running the backend using, ensure you have the following installed:
+Before running the backend using docker, ensure you have the following installed:
 
 1. **Docker** (https://www.docker.com/products/docker-desktop/)
 
 Using docker, it's extremely simple.
+
+#### Running
+
 Just create `.env.docker` with the values ->
 
 ```sh
@@ -35,9 +38,11 @@ Now, run ->
 
 Server should be up and running, migrations will run automatically
 
-## Running locally
+---
 
-## Prerequisites
+### Running locally
+
+#### Prerequisites
 
 Before running the backend, ensure you have the following installed:
 
@@ -46,14 +51,14 @@ Before running the backend, ensure you have the following installed:
 3. **PostgreSQL** (https://www.postgresql.org/download)
 4. **Redis** (https://redis.io/download)
 
-### 1. Clone the Repository
+#### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-repo/bridging-events-backend.git
+git clone https://github.com/dibyajyotiron/eth-bridge.git
 cd bridging-events-backend
 ```
 
-### 2. Create a `.env` File
+#### 2. Create a `.env` File
 
 Create a `.env` file in the project root and set the following environment variables:
 
@@ -68,7 +73,7 @@ REDIS_STREAM="bridging_events"
 REDIS_STREAM_DLQ="bridging_events_DLQ"
 ```
 
-### 3. Set Up PostgreSQL
+#### 3. Set Up PostgreSQL
 
 Create a PostgreSQL database:
 
@@ -82,7 +87,7 @@ Or if you've `createdb` command installed,
 createdb bridging_events;
 ```
 
-### 4. Run Database Migrations
+#### 4. Run Database Migrations
 
 Run migrations using `makefile`:
 
@@ -96,13 +101,13 @@ Create new migrations using `makefile`:
 make new-migration NAME=some_migration_name
 ```
 
-### 5. Install Dependencies
+#### 5. Install Dependencies
 
 ```bash
 go mod tidy
 ```
 
-### 6. Run Redis Server
+#### 6. Run Redis Server
 
 Start the Redis server:
 
