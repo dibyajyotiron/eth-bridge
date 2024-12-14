@@ -78,13 +78,13 @@ REDIS_STREAM_DLQ="bridging_events_DLQ"
 Create a PostgreSQL database:
 
 ```sql
-CREATE DATABASE bridging_events;
+CREATE DATABASE events;
 ```
 
 Or if you've `createdb` command installed,
 
 ```sh
-createdb bridging_events;
+createdb events;
 ```
 
 #### 4. Run Database Migrations
