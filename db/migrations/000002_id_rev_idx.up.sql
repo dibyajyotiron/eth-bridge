@@ -1,0 +1,1 @@
+CREATE INDEX idx_rev_id ON bridge_events (id DESC);

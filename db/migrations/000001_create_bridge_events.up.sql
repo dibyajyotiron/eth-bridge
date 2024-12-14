@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS bridge_events (
+    id SERIAL PRIMARY KEY,
+    token VARCHAR(100) NOT NULL,
+    amount NUMERIC(78, 0) NOT NULL,
+    from_chain VARCHAR(100) NOT NULL,
+    to_chain VARCHAR(100) NOT NULL,
+    transaction_hash VARCHAR(255) NOT NULL,
+    timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

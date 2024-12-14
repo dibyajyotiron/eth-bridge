@@ -1,0 +1,34 @@
+# Use the official Go image
+FROM golang:1.23
+
+# Set environment variables
+ENV GO111MODULE=on \
+    CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
+
+# Create app directory
+WORKDIR /app
+
+# Install dependencies
+RUN apt-get update && apt-get install -y make curl unzip
+
+# Install golang-migrate
+RUN curl -L https://github.com/golang-migrate/migrate/releases/download/v4.17.0/migrate.linux-amd64.tar.gz | tar xvz \
+    && mv migrate /usr/local/bin/
+
+# Copy Go modules manifests and download dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy the entire project into the container
+COPY . .
+
+# Install make
+RUN apt-get update && apt-get install -y make
+
+# Expose application port
+EXPOSE 8080
+
+# Command to run the application
+CMD ["go", "run", "main.go"]

@@ -1,0 +1,1 @@
+CREATE INDEX idx_rev_timestamp ON bridge_events (timestamp DESC);
