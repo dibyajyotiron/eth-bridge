@@ -2,7 +2,7 @@
 
 This project collects and processes bridging events from the SocketGate contract on the Ethereum Mainnet. It uses Go, PostgreSQL, Redis, and Go-Migrate for migrations.
 
-### Notion (requirements doc): https://sockettech.notion.site/Assignment-Build-a-real-time-bridging-event-service-ee09be008661443c96425a5eefa21414
+### [Project Requirements (Notion Page)](https://sockettech.notion.site/Assignment-Build-a-real-time-bridging-event-service-ee09be008661443c96425a5eefa21414)
 
 ---
 
@@ -199,7 +199,7 @@ make test
 
 This project is organized following a modular and maintainable directory structure commonly used in Go applications:
 
-Note: The structure was designed using tree command
+Note: The structure was generated using `tree` command
 
 ```sh
 ├── Dockerfile.local
