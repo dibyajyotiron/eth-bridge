@@ -69,6 +69,8 @@ func (r *RedisStreamConsumer) Stop() {
 // in reading or decoding. If an error occurs during event saving, it logs the error.
 //
 // It also ensures the stream message is acknowledged once processed.
+//
+//	Note: Since it is a blocking process, please ensure to call it with `go` keyword
 func (r *RedisStreamConsumer) Consume() {
 	for {
 		select {

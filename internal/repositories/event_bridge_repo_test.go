@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/eth-bridging/config"
 	"github.com/eth-bridging/internal/models"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
@@ -44,7 +45,6 @@ func Setup(t *testing.T) (mock sqlmock.Sqlmock, repo BridgeEventRepository, gorm
 	if err != nil {
 		t.Fatalf("Failed to create mock database: %v", err)
 	}
-	// defer mockDb.Close()
 
 	dialector := postgres.New(postgres.Config{
 		Conn:       mockDb,
@@ -54,7 +54,7 @@ func Setup(t *testing.T) (mock sqlmock.Sqlmock, repo BridgeEventRepository, gorm
 	// Create an instance of BridgeEventRepository with mocked DB
 	gormDB, _ = gorm.Open(dialector, &gorm.Config{})
 
-	repo = NewBridgeEventRepository(gormDB)
+	repo = NewBridgeEventRepository(gormDB, config.LoadConfig())
 	return mock, repo, gormDB
 }
 
@@ -92,11 +92,10 @@ func TestBridgeEventRepository_GetAll(t *testing.T) {
 		WillReturnRows(rows)
 
 	// Call the GetAll method
-	fetchedEvents, err := repo.GetAll(0, 2)
+	fetchedEvents, err := repo.GetAll(0, 2, "WEI")
 
 	// Assert that no error occurred, and the result matches the expected fetchedEvents
 	assert.NoError(t, err)
 	assert.Len(t, fetchedEvents, 2)
-	assert.Equal(t, fetchedEvents, fetchedEvents)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }

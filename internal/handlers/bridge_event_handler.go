@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
+	"github.com/eth-bridging/config"
 	"github.com/eth-bridging/internal/services"
 
 	"github.com/gin-gonic/gin"
@@ -24,6 +25,11 @@ func (h *BridgeEventHandler) GetEvents(c *gin.Context) {
 	// Get query parameters
 	lastIDStr := c.Query("last_id")
 	limitStr := c.Query("limit")
+	currency := strings.ToUpper(c.Query("currency"))
+
+	if currency == "" {
+		currency = config.LoadConfig().GetDefaultCurrency().Currency
+	}
 
 	// Default limit if not provided
 	limit := 10
@@ -36,7 +42,7 @@ func (h *BridgeEventHandler) GetEvents(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid limit parameter"})
 			return
 		}
-		fmt.Println(parsedLimit, maxLimit)
+
 		if parsedLimit > maxLimit {
 			parsedLimit = maxLimit
 		}
@@ -55,7 +61,7 @@ func (h *BridgeEventHandler) GetEvents(c *gin.Context) {
 	}
 
 	// Fetch events
-	events, err := h.service.GetAllEvents(lastID, limit)
+	events, err := h.service.GetAllEvents(lastID, limit, currency)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

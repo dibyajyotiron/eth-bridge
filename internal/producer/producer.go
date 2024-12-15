@@ -11,6 +11,7 @@ import (
 
 // Producer defines the interface for publishing events.
 type Producer interface {
+	// PublishEvent publishes an event to the Redis stream
 	PublishEvent(event models.BridgeEvent) error
 	Stop()
 }
@@ -41,7 +42,7 @@ func (p *RedisProducer) PublishEvent(event models.BridgeEvent) error {
 	// Check if we received a stop signal before publishing
 	select {
 	case <-p.done:
-		// Stop the producer if signal is received
+		// Stop the producer if stop signal is received
 		log.Println("Stop signal received. Publisher will not publish any more events.")
 		return nil
 	default:
@@ -50,7 +51,7 @@ func (p *RedisProducer) PublishEvent(event models.BridgeEvent) error {
 
 	ctx := context.Background()
 
-	// Convert the event to a flat key-value map
+	// Convert the event to a flat key-value map as that is what will be sent using redis
 	eventMap := map[string]interface{}{
 		"transactionHash": event.TransactionHash,
 		"token":           event.Token,

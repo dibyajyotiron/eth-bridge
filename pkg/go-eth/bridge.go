@@ -2,6 +2,7 @@ package ethereum
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"math/big"
@@ -65,7 +66,7 @@ func NewEthereumClient(url, contractAddress, contractABI, topicHex string) (*Eth
 // It subscribes to Ethereum logs, decodes the events, and processes each
 // bridging event by publishing it to Redis.
 // This way, even if something fails during consuming, the messages can be retried as it's queue based.
-func (ec *EthereumClient) StartBridgingEventPublisher(ctx context.Context, ch chan BridgingEvent, streamProducer producer.Producer) error {
+func (ec *EthereumClient) StartBridgingEventPublisher(ctx context.Context, streamProducer producer.Producer) error {
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{ec.address},
 		Topics:    [][]common.Hash{{ec.topic}},
@@ -88,30 +89,47 @@ func (ec *EthereumClient) StartBridgingEventPublisher(ctx context.Context, ch ch
 			return fmt.Errorf("error while subscribing to logs: %w", err)
 		case vLog := <-logs:
 			// Decode the log into a bridging event
-			bridgingEvent, err := decodeSocketBridgeEvent(ec.abi, vLog)
-			if err != nil || bridgingEvent == nil {
-				// If decoding fails, skip the log and continue as other logs might not be failing
-				log.Printf("Error decoding event: %+v, log: %+v\n", err, vLog)
-				continue
-			}
-
+			// If decoding fails, skip the log and continue as other logs might not be failing
 			// Create the BridgeEvent struct
-			bridgeEvent := &models.BridgeEvent{
-				TransactionHash: bridgingEvent.TxHash,
-				FromChain:       bridgingEvent.Sender.Hex(),
-				ToChain:         bridgingEvent.Receiver.Hex(),
-				Amount:          fmt.Sprint(bridgingEvent.Amount),
-				Token:           fmt.Sprint(bridgingEvent.Token),
-				Timestamp:       time.Now(),
-			}
-
 			// Publish the event to the Redis stream
-			if err := streamProducer.PublishEvent(*bridgeEvent); err != nil {
-				log.Printf("Error publishing event to Redis, event: %+v error: %+v\n", *bridgeEvent, err)
+			err := ec.handleFilterLog(vLog, streamProducer)
+			// incase error happens while handling a log stream
+			// move to next log stream
+			if err != nil {
 				continue
 			}
 		}
 	}
+}
+
+// handleFilterLog decodes the log data from streaming filter query to a BridgingEvent struct.
+// if successful, then it will publish an event to provided redis stream
+// returns the error if any of these two steps fails
+func (ec *EthereumClient) handleFilterLog(vLog types.Log, streamProducer producer.Producer) error {
+	// Decode vLog into BridgingEvent using ABI
+	bridgingEvent, err := decodeSocketBridgeEvent(ec.abi, vLog)
+	if err != nil || bridgingEvent == nil {
+		errMessage := fmt.Sprintf("Error decoding event: %+v, log: %+v\n", err, vLog)
+		log.Println(errMessage)
+		return errors.New(errMessage)
+	}
+
+	bridgeEvent := &models.BridgeEvent{
+		TransactionHash: bridgingEvent.TxHash,
+		FromChain:       bridgingEvent.Sender.Hex(),
+		ToChain:         bridgingEvent.Receiver.Hex(),
+		Amount:          fmt.Sprint(bridgingEvent.Amount),
+		Token:           fmt.Sprint(bridgingEvent.Token),
+		Timestamp:       time.Now(),
+	}
+
+	// Publish Event to redis
+	if err := streamProducer.PublishEvent(*bridgeEvent); err != nil {
+		log.Printf("Error publishing event to Redis, event: %+v error: %+v\n", *bridgeEvent, err)
+		return err
+	}
+
+	return nil
 }
 
 // decodeSocketBridgeEvent decodes the log data from streaming filter query into a

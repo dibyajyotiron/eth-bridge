@@ -46,7 +46,7 @@ func InitializeContainer(cfg *config.Config, ethClient *ethereum.EthereumClient,
 	})
 
 	// Initialize Repository
-	eventRepo := repositories.NewBridgeEventRepository(db)
+	eventRepo := repositories.NewBridgeEventRepository(db, cfg)
 
 	// Initialize Service
 	eventService := services.NewBridgeEventService(eventRepo, ethClient)
@@ -56,14 +56,15 @@ func InitializeContainer(cfg *config.Config, ethClient *ethereum.EthereumClient,
 
 	// Initialize Redis Stream Consumer
 	wg.Add(1)
-	go streamConsumer.Consume() // Start the consumer in a separate goroutine
+	go streamConsumer.Consume()
 
 	// Initialize Redis Stream Consumer
 	streamProducer := producer.NewRedisProducer(redisClient, cfg.RedisStreamName, wg)
 
 	// Start processing the incoming bridging events
+	// Ideally, in production, processing should be a separate microservice
 	wg.Add(1)
-	go eventService.ProcessIncomingBridgeEvents(make(chan ethereum.BridgingEvent), streamProducer)
+	go eventService.ProcessIncomingBridgeEvents(streamProducer)
 
 	return &Container{
 		EventService: eventService,
