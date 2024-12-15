@@ -8,7 +8,7 @@ This project collects and processes bridging events from the SocketGate contract
 
 ## Installation Steps
 
-### Using Docker
+### Running locally `using Docker`
 
 #### Prerequisites
 
@@ -40,7 +40,7 @@ Server should be up and running, migrations will run automatically
 
 ---
 
-### Running locally
+### Running locally `without Docker`
 
 #### Prerequisites
 
@@ -117,7 +117,7 @@ redis-server
 
 ---
 
-## Running the Backend
+#### 7. Running the Backend
 
 Start the backend server:
 
@@ -136,17 +136,19 @@ The server should now be running at `http://localhost:8080`
 
 **GET** `/events`
 
-| Query Parameter | Description                  | Example Value |
-| --------------- | ---------------------------- | ------------- |
-| `last_id`       | ID of the last fetched event | `10`          |
-| `limit`         | Number of events per page    | `10`          |
+| Query Parameter | Description                       | Example Value |
+| --------------- | --------------------------------- | ------------- |
+| `last_id`       | ID of the last fetched event      | `10`          |
+| `limit`         | Number of events per page         | `10`          |
+| `currency`      | The currency in which tx is shown | `WEI`         |
 
 **Param Details**
 
 - `last_id`: First request is meant to be sent without `last_id`,`with limit`. You get `last_id` in the response. When you pass in, the same `last_id` in the next request, you get all items `after that last_id`. Events are ordered in `DESC` order. Last essentially means last item in `DESC` events list.
 - `limit`: Number of items required per page. `defaults` to `10`. Maximum is `100`.
+- `currency`: `Amount` of the Event will be converted from `WEI` to the desired currency if provided, else `defaults` to `WEI`.
 
-**Example Request**:
+  **Example Request**:
 
 ```bash
 curl --location 'localhost:8080/api/v1/events?limit=50&last_id=3'
@@ -188,8 +190,148 @@ curl --location 'localhost:8080/api/v1/events?limit=50&last_id=3'
 ### Run Tests
 
 ```bash
-go test ./...
+make test
 ```
+
+---
+
+## Project Directory Structure
+
+This project is organized following a modular and maintainable directory structure commonly used in Go applications:
+
+Note: The structure was designed using tree command
+
+```sh
+├── Dockerfile.local
+├── cmd
+│   └── main.go
+├── config
+│   └── config.go
+├── db
+│   └── migrations
+│       ├── 000001_create_bridge_events.down.sql
+│       ├── 000001_create_bridge_events.up.sql
+│       ├── 000002_id_rev_idx.down.sql
+│       ├── 000002_id_rev_idx.up.sql
+│       ├── 000003_timestamp_rev_idx.down.sql
+│       └── 000003_timestamp_rev_idx.up.sql
+├── docker-compose.yml
+├── go.mod
+├── go.sum
+├── internal
+│   ├── app
+│   │   └── app.go
+│   ├── consumer
+│   │   └── consumer.go
+│   ├── handlers
+│   │   └── bridge_event_handler.go
+│   ├── models
+│   │   └── bridge_event.go
+│   ├── producer
+│   │   ├── producer.go
+│   │   └── producer_test.go
+│   ├── repositories
+│   │   ├── event_bridge_repo_test.go
+│   │   └── event_bridge_respo.go
+│   ├── routers
+│   │   └── routes.go
+│   └── services
+│       ├── bridge_service.go
+│       └── bridge_service_test.go
+├── makefile
+├── pkg
+│   ├── di
+│   │   └── container.go
+│   └── go-eth
+│       ├── bridge.go
+│       └── bridge_test.go
+└── readme.MD
+```
+
+### Directory Breakdown
+
+- **Dockerfile.local**  
+  Contains instructions to build and run the application in a local Docker environment.
+
+- **cmd/main.go**  
+  The entry point of the application. This file initializes the application and starts the server or relevant processes.
+
+- **config/config.go**  
+  Manages configuration settings such as environment variables, database connections, or third-party service credentials. Generally in production, as service like viper is used.
+
+- **db/migrations**  
+  SQL migration files for creating and updating the database schema:
+
+  - `.up.sql`: Defines how to apply the changes.
+  - `.down.sql`: Defines how to roll back the changes.
+    Note: These files are generated using ` make new-migration NAME=some_name` command
+
+- **docker-compose.yml**  
+  Defines services, networks, and volumes for Docker Compose to setup everything locally without hassle.
+
+- **go.mod & go.sum**  
+  Go module files for dependency management.
+
+- **internal**  
+  Contains the core business logic, separated into different sub-packages for maintainability:
+
+  - **app**:  
+    Initializes the application components.
+
+  - **consumer**:  
+    Listens to incoming events or messages and processes them accordingly.
+
+  - **handlers**:  
+    Contains HTTP handlers or controllers to manage API requests.
+
+  - **models**:  
+    Defines data models or structs for database entities.
+
+  - **producer**:  
+    Handles publishing events to Redis or other messaging systems, with unit tests included.
+
+  - **repositories**:  
+    Contains data access logic (e.g., querying the database) with tests to ensure correctness.
+
+  - **routers**:  
+    Defines application routes and links them to corresponding handlers.
+
+  - **services**:  
+    Implements the business logic layer that interacts with repositories and other components.
+
+- **makefile**  
+  Automates common tasks like running tests, building the application, and managing migrations.
+
+- **pkg**  
+  Contains reusable packages:
+
+  - **di (Dependency Injection)**:  
+    Manages dependency injection to wire up the application components.
+
+  - **go-eth**:  
+    Provides Ethereum-related functionalities, including bridge operations, with corresponding tests.
+
+- **readme.MD**  
+  Documentation for the project, including setup instructions and usage guidelines.
+
+### Why This Structure?
+
+1. **Separation of Concerns**:  
+   Each component (e.g., handlers, services, repositories) has a clear and distinct responsibility, making the code easier to maintain and extend.
+
+2. **Scalability**:  
+   As the project grows, new features or components can be added without affecting the existing structure.
+
+3. **Testability**:  
+   Components are organized in a way that makes it easy to write unit tests for each layer (e.g., repositories, services, producers).
+
+4. **Reusability**:  
+   The `pkg` directory holds reusable code that can be shared across different parts of the application or even other projects.
+
+5. **Configuration Management**:  
+   Centralized configuration helps manage settings consistently across different environments (e.g., development, staging, production).
+
+This directory structure is a standard pattern in Go projects, promoting clean architecture, readability, and long-term maintainability.
 
 ---
 
