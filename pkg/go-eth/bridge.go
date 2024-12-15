@@ -30,6 +30,10 @@ type BridgingEvent struct {
 	Metadata   [32]byte       `json:"metadata"`
 }
 
+type EthereumClientInterface interface {
+	StartBridgingEventPublisher(ctx context.Context, streamProducer producer.Producer) error
+}
+
 // Ethereum client wrapper
 type EthereumClient struct {
 	client  *ethclient.Client

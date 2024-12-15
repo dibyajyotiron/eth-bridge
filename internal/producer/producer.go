@@ -2,6 +2,7 @@ package producer
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"sync"
 
@@ -16,14 +17,18 @@ type Producer interface {
 	Stop()
 }
 
+// RedisClient defines the methods used by RedisProducer for testability
+type RedisClient interface {
+	XAdd(ctx context.Context, a *redis.XAddArgs) *redis.StringCmd
+}
 type RedisProducer struct {
-	client *redis.Client
+	client RedisClient
 	stream string
 	done   chan bool
 	wg     *sync.WaitGroup
 }
 
-func NewRedisProducer(client *redis.Client, stream string, wg *sync.WaitGroup) *RedisProducer {
+func NewRedisProducer(client RedisClient, stream string, wg *sync.WaitGroup) *RedisProducer {
 	return &RedisProducer{
 		client: client,
 		stream: stream,
@@ -43,7 +48,7 @@ func (p *RedisProducer) PublishEvent(event models.BridgeEvent) error {
 	select {
 	case <-p.done:
 		// Stop the producer if stop signal is received
-		log.Println("Stop signal received. Publisher will not publish any more events.")
+		fmt.Printf("Stop signal received. Publisher will not publish any more events.")
 		return nil
 	default:
 		// Continue publishing the events to redis

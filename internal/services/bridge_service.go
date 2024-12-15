@@ -18,25 +18,25 @@ type BridgeEventService interface {
 	// ProcessIncomingBridgeEvents listens for bridging events and saves them to the database
 	//
 	//	It is a blocking method, so ideally is should be called with `go` keyword
-	ProcessIncomingBridgeEvents(streamProducer *producer.RedisProducer)
+	ProcessIncomingBridgeEvents(streamProducer producer.Producer)
 }
 
 type bridgeEventService struct {
 	repo      repositories.BridgeEventRepository
-	ethClient *ethereum.EthereumClient
+	ethClient ethereum.EthereumClientInterface
 }
 
 // ProcessIncomingBridgeEvents listens for bridging events and saves them to the database
 //
 //	It is a blocking method, so ideally is should be called with `go` keyword
-func (s *bridgeEventService) ProcessIncomingBridgeEvents(streamProducer *producer.RedisProducer) {
+func (s *bridgeEventService) ProcessIncomingBridgeEvents(streamProducer producer.Producer) {
 	// Start listening to events
 	if err := s.ethClient.StartBridgingEventPublisher(context.Background(), streamProducer); err != nil {
 		log.Fatalf("Error listening to events: %v", err)
 	}
 }
 
-func NewBridgeEventService(repo repositories.BridgeEventRepository, ethClient *ethereum.EthereumClient) BridgeEventService {
+func NewBridgeEventService(repo repositories.BridgeEventRepository, ethClient ethereum.EthereumClientInterface) BridgeEventService {
 	return &bridgeEventService{
 		repo:      repo,
 		ethClient: ethClient,
