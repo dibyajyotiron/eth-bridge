@@ -44,9 +44,8 @@ type NewConsumerInput struct {
 // - Returns a new RedisStreamConsumer instance with the provided configuration.
 //
 // Note:
-// In a production environment with multiple pods, it is recommended to use the same `consumerID`
-// across all pods. This ensures that events are processed in parallel by the multiple instances
-// of the consumer group, rather than each pod processing the same messages.
+//
+//	In a production environment with multiple pods, it is recommended to use the same `consumerID` across all pods. This ensures that events are processed in parallel by the multiple instances of the consumer group, rather than each pod processing the same messages.
 func NewRedisStreamConsumer(input *NewConsumerInput) *RedisStreamConsumer {
 	ctx := context.Background()
 
