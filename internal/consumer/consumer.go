@@ -7,21 +7,33 @@ import (
 	"sync"
 	"time"
 
+	"github.com/eth-bridging/config"
 	"github.com/eth-bridging/internal/models"
 	"github.com/eth-bridging/internal/services"
-
+	rediscli "github.com/eth-bridging/pkg/redisclient"
 	"github.com/go-redis/redis/v8"
 )
 
 type RedisStreamConsumer struct {
 	ctx        context.Context
-	client     *redis.Client
+	client     rediscli.RedisClient
 	streamName string
 	groupName  string
 	consumerID string
 	service    services.BridgeEventService
 	done       chan bool
 	wg         *sync.WaitGroup
+	cfg        *config.Config
+}
+
+type NewConsumerInput struct {
+	Client     rediscli.RedisClient
+	StreamName string
+	GroupName  string
+	ConsumerID string
+	Service    services.BridgeEventService
+	Wg         *sync.WaitGroup
+	Cfg        *config.Config
 }
 
 // NewRedisStreamConsumer creates a new Redis stream consumer that listens
@@ -35,24 +47,25 @@ type RedisStreamConsumer struct {
 // In a production environment with multiple pods, it is recommended to use the same `consumerID`
 // across all pods. This ensures that events are processed in parallel by the multiple instances
 // of the consumer group, rather than each pod processing the same messages.
-func NewRedisStreamConsumer(client *redis.Client, streamName, groupName, consumerID string, service services.BridgeEventService, wg *sync.WaitGroup) *RedisStreamConsumer {
+func NewRedisStreamConsumer(input *NewConsumerInput) *RedisStreamConsumer {
 	ctx := context.Background()
 
 	// Create the consumer group if it doesn't exist. The "0" indicates starting from the earliest message.
-	err := client.XGroupCreateMkStream(ctx, streamName, groupName, "0").Err()
+	err := input.Client.XGroupCreateMkStream(ctx, input.StreamName, input.GroupName, "0").Err()
 	if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {
 		log.Fatalf("Failed to create consumer group: %v", err)
 	}
 
 	return &RedisStreamConsumer{
-		client:     client,
-		streamName: streamName,
-		groupName:  groupName,
-		consumerID: consumerID,
-		service:    service,
+		client:     input.Client,
+		streamName: input.StreamName,
+		groupName:  input.GroupName,
+		consumerID: input.ConsumerID,
+		service:    input.Service,
 		ctx:        ctx,
 		done:       make(chan bool),
-		wg:         wg,
+		wg:         input.Wg,
+		cfg:        input.Cfg,
 	}
 }
 
@@ -138,7 +151,7 @@ func (r *RedisStreamConsumer) processStreamEntries(entries []redis.XStream) {
 func (r *RedisStreamConsumer) moveToDLQ(message redis.XMessage) {
 	// Add the message to a DLQ stream (e.g., "bridging_events_dlq")
 	err := r.client.XAdd(r.ctx, &redis.XAddArgs{
-		Stream: "bridging_events_dlq", // The DLQ stream
+		Stream: r.cfg.RedisStreamDlq,
 		Values: message.Values,
 	}).Err()
 	if err != nil {

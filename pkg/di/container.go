@@ -52,7 +52,16 @@ func InitializeContainer(cfg *config.Config, ethClient *ethereum.EthereumClient,
 	eventService := services.NewBridgeEventService(eventRepo, ethClient)
 
 	// Initialize Redis Stream Consumer
-	streamConsumer := consumer.NewRedisStreamConsumer(redisClient, cfg.RedisStreamName, "bridge_group", "consumer_1", eventService, wg)
+	input := &consumer.NewConsumerInput{
+		Client:     redisClient,
+		StreamName: cfg.RedisStreamName,
+		GroupName:  "bridge_group",
+		ConsumerID: "consumer_1",
+		Service:    eventService,
+		Wg:         wg,
+		Cfg:        cfg,
+	}
+	streamConsumer := consumer.NewRedisStreamConsumer(input)
 
 	// Initialize Redis Stream Consumer
 	wg.Add(1)

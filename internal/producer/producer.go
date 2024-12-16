@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/eth-bridging/internal/models"
+	rediscli "github.com/eth-bridging/pkg/redisclient"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -18,17 +19,15 @@ type Producer interface {
 }
 
 // RedisClient defines the methods used by RedisProducer for testability
-type RedisClient interface {
-	XAdd(ctx context.Context, a *redis.XAddArgs) *redis.StringCmd
-}
+
 type RedisProducer struct {
-	client RedisClient
+	client rediscli.RedisClient
 	stream string
 	done   chan bool
 	wg     *sync.WaitGroup
 }
 
-func NewRedisProducer(client RedisClient, stream string, wg *sync.WaitGroup) *RedisProducer {
+func NewRedisProducer(client rediscli.RedisClient, stream string, wg *sync.WaitGroup) *RedisProducer {
 	return &RedisProducer{
 		client: client,
 		stream: stream,

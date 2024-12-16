@@ -2,7 +2,6 @@ package producer_test
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"log"
 	"sync"
@@ -11,23 +10,15 @@ import (
 
 	"github.com/eth-bridging/internal/models"
 	"github.com/eth-bridging/internal/producer"
+	redisCli "github.com/eth-bridging/pkg/redisclient"
 	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-type MockRedisClient struct {
-	mock.Mock
-}
-
-func (m *MockRedisClient) XAdd(ctx context.Context, a *redis.XAddArgs) *redis.StringCmd {
-	args := m.Called(ctx, a)
-	return args.Get(0).(*redis.StringCmd)
-}
-
 func TestPublishEvent(t *testing.T) {
 
-	mockClient := new(MockRedisClient)
+	mockClient := new(redisCli.MockRedisClient)
 
 	mockProducer := producer.NewRedisProducer(mockClient, "test-stream", nil)
 
@@ -51,7 +42,7 @@ func TestPublishEvent(t *testing.T) {
 
 func TestPublishEvent_ErrorOnXAdd(t *testing.T) {
 
-	mockClient := new(MockRedisClient)
+	mockClient := new(redisCli.MockRedisClient)
 
 	mockProducer := producer.NewRedisProducer(mockClient, "test-stream", nil)
 
@@ -80,7 +71,7 @@ func TestPublishEvent_ErrorOnXAdd(t *testing.T) {
 }
 
 func TestPublishEvent_StopSignal(t *testing.T) {
-	mockClient := new(MockRedisClient)
+	mockClient := new(redisCli.MockRedisClient)
 
 	var buf bytes.Buffer
 	log.SetOutput(&buf)
@@ -123,7 +114,7 @@ func TestPublishEvent_StopSignal(t *testing.T) {
 
 func TestPublishEvent_Success(t *testing.T) {
 
-	mockClient := new(MockRedisClient)
+	mockClient := new(redisCli.MockRedisClient)
 
 	mockProducer := producer.NewRedisProducer(mockClient, "test-stream", nil)
 
@@ -147,7 +138,7 @@ func TestPublishEvent_Success(t *testing.T) {
 
 func TestPublishEvent_WithEmptyTransactionHash(t *testing.T) {
 
-	mockClient := new(MockRedisClient)
+	mockClient := new(redisCli.MockRedisClient)
 
 	mockProducer := producer.NewRedisProducer(mockClient, "test-stream", nil)
 
@@ -171,7 +162,7 @@ func TestPublishEvent_WithEmptyTransactionHash(t *testing.T) {
 
 func TestPublishEvent_WithInvalidData(t *testing.T) {
 
-	mockClient := new(MockRedisClient)
+	mockClient := new(redisCli.MockRedisClient)
 
 	mockProducer := producer.NewRedisProducer(mockClient, "test-stream", nil)
 
