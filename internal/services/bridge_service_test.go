@@ -45,6 +45,7 @@ func (m *MockRedisProducer) PublishEvent(event models.BridgeEvent) error {
 
 func (m *MockRedisProducer) Stop() {
 	// nothing to do here, as there is no channel to stop that needs mocking
+	m.Called()
 }
 
 func TestSaveEvent(t *testing.T) {

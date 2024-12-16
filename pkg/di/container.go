@@ -67,7 +67,7 @@ func InitializeContainer(cfg *config.Config, ethClient *ethereum.EthereumClient,
 	wg.Add(1)
 	go streamConsumer.Consume()
 
-	// Initialize Redis Stream Consumer
+	// Initialize Redis Stream Producer
 	streamProducer := producer.NewRedisProducer(redisClient, cfg.RedisStreamName, wg)
 
 	// Start processing the incoming bridging events
